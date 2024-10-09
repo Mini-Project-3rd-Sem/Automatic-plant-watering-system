@@ -1,0 +1,36 @@
+int water;                     // Variable to store sensor value
+bool pumpActivated = false;     // Track whether the pump has already been activated
+unsigned long previousMillis = 0;   // To store last pump activation time
+const long interval = 1800000;  // 30 minutes in milliseconds (30 * 60 * 1000)
+
+void setup() {
+  pinMode(3, OUTPUT);           // Relay control pin
+  Serial.begin(9600);           // Start serial communication for live monitoring
+}
+
+void loop() {
+  water = analogRead(A0);       // Read the analog signal from the soil sensor
+  Serial.print("Soil Moisture Level: ");  // Print label
+  Serial.println(water);        // Print the sensor value
+
+  unsigned long currentMillis = millis();  // Get the current time
+
+  if (water > 600 && !pumpActivated) {  // Soil is dry and pump hasn't activated yet
+    digitalWrite(3, LOW);              // Turn on the relay (pump on)
+    Serial.println("Pump ON");         // Display pump status
+    delay(5000);                       // Keep the pump ON for 5 seconds
+    digitalWrite(3, HIGH);             // Turn off the pump after 5 seconds
+    Serial.println("Pump OFF after 5 seconds");
+
+    pumpActivated = true;              // Set the flag so the pump won't turn on again
+    previousMillis = currentMillis;    // Store the time when the pump was last activated
+  }
+
+  // Reset the pump activation status after 30 minutes
+  if (currentMillis - previousMillis >= interval) {
+    pumpActivated = false;             // Allow the pump to be activated again
+    Serial.println("Pump activation reset after 30 minutes.");
+  }
+
+  delay(1000);  // Wait for 1 second before the next reading
+}
